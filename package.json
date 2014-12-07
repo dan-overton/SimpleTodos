@@ -1,0 +1,16 @@
+{
+  "name": "SimpleTodos",
+  "version": "1.0.0",
+  "description": "A simple todo web app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Daniel Overton",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.10.0",
+    "express": "^4.10.4",
+    "morgan": "^1.5.0"
+  }
+}

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+		<title>Todos</title>
+
+		<base href="/">
+
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+
+		<script src="https://cdn.rawgit.com/visionmedia/page.js/master/page.js"></script>
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"></script>
+		<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+
+		<script src="scripts/todoProviderLocalStorage.js"></script>
+		<script src="scripts/todoProviderREST.js"></script>
+
+		<script>
+			Handlebars.registerHelper('checked', function(currentValue) {
+				console.log(currentValue);
+				console.log(typeof currentValue);
+				return currentValue ? ' checked ' : '';
+			});
+		</script>
+
+		<style>
+			.completedtrue
+			{
+				text-decoration: line-through;
+			}
+		</style>
+	</head>
+	<body onload="index()">
+		<div class="container">
+			<nav class="navbar navbar-default" role="navigation">
+				<div class="container-fluid">
+					<!-- Brand and toggle get grouped for better mobile display -->
+					<div class="navbar-header">
+					  <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					  </button>
+					  <a class="navbar-brand" href="#">Todos</a>
+					</div>
+
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+						<ul class="nav navbar-nav">
+							<li id="homenav" class="active"><a href="./">List<span class="sr-only">(current)</span></a></li>
+						</ul>
+					</div><!-- /.navbar-collapse -->
+				</div><!-- /.container-fluid -->
+			</nav>
+			
+			<main>
+				<div id="content" class="row">
+				
+				</div>
+			</main>
+			
+			<footer>
+				<h6>Routing: <a href="http://visionmedia.github.io/page.js/">Page.js</a>, Templating: <a href="http://handlebarsjs.com/">Handlebars</a>, CSS: <a href="http://getbootstrap.com/">Bootstrap</a>,
+					Persistence:
+					<select onchange="toggleProvider()" id="providerToggle"><option><a href="http://en.wikipedia.org/wiki/Representational_state_transfer">REST</a></option><option><a href="http://diveintohtml5.info/storage.html">LocalStorage</a></option></select></h6>
+			</footer>
+		</div>
+		
+		<script id="index-template" type="text/x-handlebars-template">
+			<div class="col-md-12">
+				<h2> Current Todos <button type="button" class="btn btn-primary" onclick="page('/add')">Add Todo</button></h2>
+				{{#if todos}}
+					<form role="form" onsubmit="return false">
+						<div class=table-responsive">
+							<table class="table">
+								{{#each todos}}
+								<tr>
+									<td><input type="checkbox" {{checked this.completed}} onchange="addOrUpdateList({{@index}}, this.checked)"><a href="/edit/{{@index}}"><span id="todo{{@index}}" class="completed{{this.completed}}"> {{this.todo}}</span></a></td><td><button type="button" class="btn btn-danger" onclick="deleteTodo({{@index}})"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</button></td>
+								</tr>
+								{{/each}}
+							</table>
+						</div>
+					</form>
+				{{else}}
+					<p> You have nothing to do! Maybe celebrate? </p>
+				{{/if}}
+			</div>
+
+		</script>
+		
+		<script id="item-template" type="text/x-handlebars-template">
+			<div class="col-md-12">
+				<form onsubmit="return addOrUpdateForm({{index}})" role="form">
+					<div class="form-group">
+						<label for="todo">Todo</label>
+						<input type="text" name="todo" value="{{currentTodo.todo}}" id="todo" class="form-control" placeholder="e.g. Fix the fridge..." required>
+						<div class="checkbox">
+							<label>
+								<input type="checkbox" name="completed"  {{checked currentTodo.completed}} id="completed">
+								Completed?
+							</label>
+						</div>
+					</div>
+					{{#if index}}
+						<input type="submit" value="Save" class="btn btn-primary">
+					{{else}}
+						<input type="submit" value="Add" class="btn btn-primary">
+					{{/if}}
+
+					<input type="button" value="Cancel" class="btn btn-default" onclick="page('/')">
+				</form>
+			</div>
+		</script>
+		
+		<script>
+
+			var todoProvider = new RestTodoProvider();
+
+			page('/', index);
+			page('/add', singleItem);
+			page('/edit/:index', singleItem);
+			page();
+
+			function index() {
+				var source   = document.querySelector('#index-template').innerHTML;
+				var template = Handlebars.compile(source);
+				var context = {todos: todoProvider.getAllTodos()};
+
+				document.querySelector('#content').innerHTML = template(context);
+				document.title = "Todos -  List";
+			}
+
+			function singleItem(ctx)
+			{
+				var source   = document.querySelector('#item-template').innerHTML;
+				var template = Handlebars.compile(source);
+				var context = {};
+
+				if(ctx.params.index) {
+					context = {index: ctx.params.index, currentTodo: todoProvider.getTodo(ctx.params.index)};
+				}
+
+				document.querySelector('#content').innerHTML = template(context);
+				document.querySelector('input[name="todo"]').focus();
+
+				if(ctx.params.index)
+					document.title = "Todos - Edit";
+				else
+					document.title = "Todos - Add";
+			}
+
+			function addOrUpdateList(index, completed)
+			{
+				return addOrUpdateItem({todo: document.querySelector('#todo' + index).textContent.trim(), completed: completed}, index);
+			}
+
+			function addOrUpdateForm(index)
+			{
+				return addOrUpdateItem({todo: document.querySelector('input[name="todo"]').value, completed: document.querySelector('input[name="completed"]').checked}, index);
+			}
+
+			function addOrUpdateItem(newTodo, index)
+			{
+
+				if(typeof(index) !== 'undefined')
+				{
+					todoProvider.updateTodo(index, newTodo)
+				}
+				else
+				{
+					todoProvider.addTodo(newTodo)
+				}
+
+				page('/');
+
+				return false; //form
+			}
+
+			function deleteTodo(index)
+			{
+				todoProvider.deleteTodo(index);
+				page('/');
+			}
+
+			function toggleProvider()
+			{
+				if(document.getElementById("providerToggle").value === "REST")
+				{
+					todoProvider = new RestTodoProvider();
+				}
+				else
+				{
+					todoProvider = new LocalTodoProvider();
+				}
+
+				page('/');
+			}
+		</script>
+	</body>
+</html>
