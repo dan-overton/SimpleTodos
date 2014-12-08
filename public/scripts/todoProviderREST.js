@@ -5,110 +5,92 @@ var RestTodoProvider = function()
 {
 };
 
-RestTodoProvider.prototype.updateFromStorage = function()
+RestTodoProvider.prototype.getTodosFromStorage = function(callback)
 {
     var provider = this;
     var ajaxRequest = $.ajax({
         url: 'api/todos/',
         type: "GET",
         dataType: 'json',
-        async: false
+        async: true
     });
 
     ajaxRequest.done(function(data) {
-        provider.cachedTodos = data;
-        return true;
+       callback(null, data);
     });
 
     ajaxRequest.fail(function(req, msg) {
-        console.log('Request failed ' + msg);
-        return false;
+        callback(msg, null);
     });
 };
 
-RestTodoProvider.prototype.getAllTodos = function()
+RestTodoProvider.prototype.getAllTodos = function(callback)
 {
-    this.updateFromStorage();
-    return this.cachedTodos;
+    this.getTodosFromStorage(callback);
 };
 
-RestTodoProvider.prototype.getTodo = function(index)
+RestTodoProvider.prototype.getTodo = function(index, callback)
 {
-    this.updateFromStorage();
-
-    if(index < 0 || index > this.cachedTodos.length)
-        throw new Error('Index out of bounds');
-    else
-        return this.cachedTodos[index];
+    this.getTodosFromStorage(function(err, data) {
+        if(err)
+        {
+            callback(err, null);
+        }
+        else
+        {
+            callback(null, data[index]);
+        }
+    });
 };
 
-RestTodoProvider.prototype.addTodo = function(newTodo) {
-    this.cachedTodos.push(newTodo);
-    console.log('Adding todo: ' + newTodo.todo + ' completed: ' + newTodo.completed);
-
+RestTodoProvider.prototype.addTodo = function(newTodo, callback) {
     var ajaxRequest = $.ajax({
         url: 'api/todos/',
         type: "POST",
         data: {data: JSON.stringify(newTodo)},
-        async: false
+        async: true
     });
 
     ajaxRequest.done(function(data) {
-        return true;
+        callback(null, data);
     });
 
     ajaxRequest.fail(function(req, msg) {
-        console.log('Request failed ' + msg);
-        return false;
+        callback(msg, null);
     });
 };
 
-RestTodoProvider.prototype.updateTodo = function(index, updatedTodo)
+RestTodoProvider.prototype.updateTodo = function(index, updatedTodo, callback)
 {
-    if(index < 0 || index > this.cachedTodos.length)
-        throw new Error('Index out of bounds');
-    else
-    {
-        this.cachedTodos[index] = updatedTodo;
+    var ajaxRequest = $.ajax({
+        url: 'api/todos/' + index,
+        type: "PUT",
+        data: {data: JSON.stringify(updatedTodo)},
+        async: true
+    });
 
-        var ajaxRequest = $.ajax({
-            url: 'api/todos/' + index,
-            type: "PUT",
-            data: {data: JSON.stringify(updatedTodo)},
-            async: false
-        });
+    ajaxRequest.done(function(data) {
+        callback(null, data);
+    });
 
-        ajaxRequest.done(function(data) {
-            return true;
-        });
-
-        ajaxRequest.fail(function(req, msg) {
-            console.log('Request failed ' + msg);
-            return false;
-        });
-    }
+    ajaxRequest.fail(function(req, msg) {
+        callback(msg, null);
+    });
 };
 
-RestTodoProvider.prototype.deleteTodo = function(index)
+RestTodoProvider.prototype.deleteTodo = function(index, callback)
 {
-    if(index < 0 || index > this.cachedTodos.length)
-        throw new Error('Index out of bounds');
-    else {
-        this.cachedTodos.splice(index, 1);
+    var ajaxRequest = $.ajax({
+        url: 'api/todos/' + index,
+        type: "DELETE",
+        async: true
+    });
 
-        var ajaxRequest = $.ajax({
-            url: 'api/todos/' + index,
-            type: "DELETE",
-            async: false
-        });
+    ajaxRequest.done(function(data) {
+        callback(null, data);
+    });
 
-        ajaxRequest.done(function(data) {
-            return true;
-        });
-
-        ajaxRequest.fail(function(req, msg) {
-            console.log('Request failed ' + msg);
-            return false;
-        });
-    }
+    ajaxRequest.fail(function(req, msg) {
+        callback(msg, null);
+    });
 };

@@ -5,61 +5,57 @@ var LocalTodoProvider = function()
 {
 };
 
-LocalTodoProvider.prototype.updateFromStorage = function()
+LocalTodoProvider.prototype.getTodosFromStorage = function(callback)
 {
-    this.cachedTodos  = localStorage.getItem('todos');
+    var todos = localStorage.getItem('todos');
 
-    if(this.cachedTodos == null)
+    if(todos == null)
     {
-        this.cachedTodos = [];
+        todos = [];
     }
     else
     {
-        this.cachedTodos = JSON.parse(this.cachedTodos);
+        todos = JSON.parse(todos);
     }
+
+    callback(null, todos);
 };
 
-LocalTodoProvider.prototype.getAllTodos = function()
+LocalTodoProvider.prototype.getAllTodos = function(callback)
 {
-    this.updateFromStorage();
-    return this.cachedTodos;
+    this.getTodosFromStorage(callback);
 };
 
-LocalTodoProvider.prototype.getTodo = function(index)
+LocalTodoProvider.prototype.getTodo = function(index, callback)
 {
-    this.updateFromStorage();
-
-    if(index < 0 || index > this.cachedTodos.length)
-        throw new Error('Index out of bounds');
-    else
-        return this.cachedTodos[index];
+    this.getTodosFromStorage(function(err, data) {
+        callback(null, data[index]);
+    });
 };
 
-LocalTodoProvider.prototype.addTodo = function(newTodo)
+LocalTodoProvider.prototype.addTodo = function(newTodo, callback)
 {
-    this.cachedTodos.push(newTodo);
-    localStorage.setItem('todos',JSON.stringify(this.cachedTodos));
+    var todos = this.getTodosFromStorage(function(err, data) {
+        data.push(newTodo);
+        localStorage.setItem('todos',JSON.stringify(data));
+        callback(null);
+    });
 };
 
-LocalTodoProvider.prototype.updateTodo = function(index, updatedTodo)
+LocalTodoProvider.prototype.updateTodo = function(index, updatedTodo, callback)
 {
-    this.updateFromStorage();
-    if(index < 0 || index > this.cachedTodos.length)
-        throw new Error('Index out of bounds');
-    else {
-        this.cachedTodos[index] = updatedTodo;
-        localStorage.setItem('todos',JSON.stringify(this.cachedTodos));
-    }
+    var todos = this.getTodosFromStorage(function(err, data) {
+        data[index] = updatedTodo;
+        localStorage.setItem('todos',JSON.stringify(data));
+        callback(null);
+    });
 };
 
-LocalTodoProvider.prototype.deleteTodo = function(index)
+LocalTodoProvider.prototype.deleteTodo = function(index, callback)
 {
-    this.updateFromStorage();
-
-    if(index < 0 || index > this.cachedTodos.length)
-        throw new Error('Index out of bounds');
-    else {
-        this.cachedTodos.splice(index, 1);
-        localStorage.setItem('todos', JSON.stringify(this.cachedTodos));
-    }
+    var todos = this.getTodosFromStorage(function(err, data) {
+        data.splice(index, 1);
+        localStorage.setItem('todos', JSON.stringify(data));
+        callback(null);
+    });
 };

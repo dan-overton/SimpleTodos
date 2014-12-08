@@ -22,9 +22,11 @@
 
 		<script>
 			Handlebars.registerHelper('checked', function(currentValue) {
-				console.log(currentValue);
-				console.log(typeof currentValue);
 				return currentValue ? ' checked ' : '';
+			});
+
+			Handlebars.registerHelper('selected', function(currentValue) {
+				return currentValue ? ' selected ' : '';
 			});
 		</script>
 
@@ -32,6 +34,10 @@
 			.completedtrue
 			{
 				text-decoration: line-through;
+			}
+
+			a[disabled] {
+				pointer-events: none;
 			}
 		</style>
 	</head>
@@ -68,20 +74,20 @@
 			<footer>
 				<h6>Routing: <a href="http://visionmedia.github.io/page.js/">Page.js</a>, Templating: <a href="http://handlebarsjs.com/">Handlebars</a>, CSS: <a href="http://getbootstrap.com/">Bootstrap</a>,
 					Persistence:
-					<select onchange="toggleProvider()" id="providerToggle"><option><a href="http://en.wikipedia.org/wiki/Representational_state_transfer">REST</a></option><option><a href="http://diveintohtml5.info/storage.html">LocalStorage</a></option></select></h6>
+					<select onchange="toggleProvider()" id="providerToggle"><option id="RestOption"><a href="http://en.wikipedia.org/wiki/Representational_state_transfer">REST</a></option><option id="LocalOption"><a href="http://diveintohtml5.info/storage.html">LocalStorage</a></option></select></h6>
 			</footer>
 		</div>
 		
 		<script id="index-template" type="text/x-handlebars-template">
 			<div class="col-md-12">
-				<h2> Current Todos <button type="button" class="btn btn-primary" onclick="page('/add')">Add Todo</button></h2>
+				<h2> Current Todos <button type="button" class="btn btn-primary guiControl" onclick="page('/add')">Add Todo</button></h2>
 				{{#if todos}}
 					<form role="form" onsubmit="return false">
 						<div class=table-responsive">
 							<table class="table">
 								{{#each todos}}
 								<tr>
-									<td><input type="checkbox" {{checked this.completed}} onchange="addOrUpdateList({{@index}}, this.checked)"><a href="/edit/{{@index}}"><span id="todo{{@index}}" class="completed{{this.completed}}"> {{this.todo}}</span></a></td><td><button type="button" class="btn btn-danger" onclick="deleteTodo({{@index}})"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</button></td>
+									<td><input class="guiControl" type="checkbox" {{checked this.completed}} onchange="addOrUpdateList({{@index}}, this.checked)"><a href="/edit/{{@index}}" class="guiControl"><span id="todo{{@index}}" class="completed{{this.completed}}"> {{this.todo}}</span></a></td><td><button type="button" class="btn btn-danger guiControl" onclick="deleteTodo({{@index}})"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</button></td>
 								</tr>
 								{{/each}}
 							</table>
@@ -108,32 +114,64 @@
 						</div>
 					</div>
 					{{#if index}}
-						<input type="submit" value="Save" class="btn btn-primary">
+						<input type="submit" value="Save" class="btn btn-primary guiControl">
 					{{else}}
-						<input type="submit" value="Add" class="btn btn-primary">
+						<input type="submit" value="Add" class="btn btn-primary guiControl">
 					{{/if}}
 
-					<input type="button" value="Cancel" class="btn btn-default" onclick="page('/')">
+					<input type="button" value="Cancel" class="btn btn-default guiControl" onclick="page('/')">
 				</form>
+			</div>
+		</script>
+
+		<script id="error-template" type="text/x-handlebars-template">
+			<div class="col-md-12">
+				<h2> Error - could not communicate with storage.</h2>
 			</div>
 		</script>
 		
 		<script>
+			var todoProvider = {};
 
-			var todoProvider = new RestTodoProvider();
+			if(document.cookie.indexOf('provider=LocalStorage') > -1)
+			{
+				todoProvider = new LocalTodoProvider();
+				document.getElementById('providerToggle').value = "LocalStorage";
+			}
+			else
+			{
+				todoProvider = new RestTodoProvider();
+				document.getElementById('providerToggle').value = "REST";
+			}
 
 			page('/', index);
 			page('/add', singleItem);
 			page('/edit/:index', singleItem);
+			page('/error', error);
+
 			page();
+
+			function error()
+			{
+				var source   = document.querySelector('#error-template').innerHTML;
+				var template = Handlebars.compile(source);
+				document.querySelector('#content').innerHTML = template();
+			}
 
 			function index() {
 				var source   = document.querySelector('#index-template').innerHTML;
 				var template = Handlebars.compile(source);
-				var context = {todos: todoProvider.getAllTodos()};
 
-				document.querySelector('#content').innerHTML = template(context);
-				document.title = "Todos -  List";
+				todoProvider.getAllTodos(function(err, data)
+				{
+					if(err)
+					{
+						page('/error');
+					}
+
+					document.querySelector('#content').innerHTML = template({todos: data});
+					document.title = "Todos -  List";
+				});
 			}
 
 			function singleItem(ctx)
@@ -143,49 +181,77 @@
 				var context = {};
 
 				if(ctx.params.index) {
-					context = {index: ctx.params.index, currentTodo: todoProvider.getTodo(ctx.params.index)};
+					todoProvider.getTodo(ctx.params.index, function(err, todo) {
+						if(err)
+						{
+							page('/error');
+						}
+
+						context = {index: ctx.params.index, currentTodo: todo};
+						document.querySelector('#content').innerHTML = template(context);
+						document.querySelector('input[name="todo"]').focus();
+						document.title = "Todos - Edit";
+					});
 				}
-
-				document.querySelector('#content').innerHTML = template(context);
-				document.querySelector('input[name="todo"]').focus();
-
-				if(ctx.params.index)
-					document.title = "Todos - Edit";
 				else
+				{
+					document.querySelector('#content').innerHTML = template(context);
+					document.querySelector('input[name="todo"]').focus();
 					document.title = "Todos - Add";
+				}
 			}
 
 			function addOrUpdateList(index, completed)
 			{
-				return addOrUpdateItem({todo: document.querySelector('#todo' + index).textContent.trim(), completed: completed}, index);
+				toggleGui(false);
+				addOrUpdateItem({todo: document.querySelector('#todo' + index).textContent.trim(), completed: completed}, index);
+				return false;
 			}
 
 			function addOrUpdateForm(index)
 			{
-				return addOrUpdateItem({todo: document.querySelector('input[name="todo"]').value, completed: document.querySelector('input[name="completed"]').checked}, index);
+				toggleGui(false);
+				addOrUpdateItem({todo: document.querySelector('input[name="todo"]').value, completed: document.querySelector('input[name="completed"]').checked}, index);
+				return false;
 			}
 
 			function addOrUpdateItem(newTodo, index)
 			{
+				var callback =  function(err, data) {
+					if(err)
+					{
+						page('/error');
+					}
+					else
+					{
+						page('/');
+					}
+				};
 
 				if(typeof(index) !== 'undefined')
 				{
-					todoProvider.updateTodo(index, newTodo)
+					todoProvider.updateTodo(index, newTodo, callback);
 				}
 				else
 				{
-					todoProvider.addTodo(newTodo)
+					todoProvider.addTodo(newTodo, callback);
 				}
-
-				page('/');
-
-				return false; //form
 			}
 
 			function deleteTodo(index)
 			{
-				todoProvider.deleteTodo(index);
-				page('/');
+				toggleGui(false);
+				todoProvider.deleteTodo(index, function(err, data) {
+					if(err)
+					{
+						page('/error');
+					}
+					else
+					{
+						page('/');
+					}
+
+				});
 			}
 
 			function toggleProvider()
@@ -193,14 +259,26 @@
 				if(document.getElementById("providerToggle").value === "REST")
 				{
 					todoProvider = new RestTodoProvider();
+					document.cookie="provider=REST";
 				}
 				else
 				{
 					todoProvider = new LocalTodoProvider();
+					document.cookie="provider=LocalStorage";
 				}
 
 				page('/');
 			}
+
+			function toggleGui(on)
+			{
+				var gui = document.querySelectorAll('.guiControl')
+				for(var i = 0; i < gui.length; i++)
+				{
+					gui[i].setAttribute('disabled', !on);
+				}
+			}
+
 		</script>
 	</body>
 </html>

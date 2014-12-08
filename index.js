@@ -22,6 +22,7 @@ switch(app.get('env')){
 //Body Parser
 app.use(bodyparser.urlencoded({extended: false})); //use normal querystring, not extended version (investigate)
 app.use(express.static(__dirname + '/public'));
+app.use(function(req,res,next){setTimeout(next,1000)});
 
 var todos = [
     {
