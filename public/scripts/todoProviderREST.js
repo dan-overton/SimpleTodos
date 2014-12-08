@@ -7,7 +7,6 @@ var RestTodoProvider = function()
 
 RestTodoProvider.prototype.getTodosFromStorage = function(callback)
 {
-    var provider = this;
     var ajaxRequest = $.ajax({
         url: 'api/todos/',
         type: "GET",
@@ -29,17 +28,20 @@ RestTodoProvider.prototype.getAllTodos = function(callback)
     this.getTodosFromStorage(callback);
 };
 
-RestTodoProvider.prototype.getTodo = function(index, callback)
+RestTodoProvider.prototype.getTodo = function(id, callback)
 {
-    this.getTodosFromStorage(function(err, data) {
-        if(err)
-        {
-            callback(err, null);
-        }
-        else
-        {
-            callback(null, data[index]);
-        }
+    var ajaxRequest = $.ajax({
+        url: 'api/todos/' + id,
+        type: "GET",
+        async: true
+    });
+
+    ajaxRequest.done(function(data) {
+        callback(null, data);
+    });
+
+    ajaxRequest.fail(function(req, msg) {
+        callback(msg, null);
     });
 };
 
@@ -60,10 +62,10 @@ RestTodoProvider.prototype.addTodo = function(newTodo, callback) {
     });
 };
 
-RestTodoProvider.prototype.updateTodo = function(index, updatedTodo, callback)
+RestTodoProvider.prototype.updateTodo = function(id, updatedTodo, callback)
 {
     var ajaxRequest = $.ajax({
-        url: 'api/todos/' + index,
+        url: 'api/todos/' + id,
         type: "PUT",
         data: {data: JSON.stringify(updatedTodo)},
         async: true
@@ -78,10 +80,10 @@ RestTodoProvider.prototype.updateTodo = function(index, updatedTodo, callback)
     });
 };
 
-RestTodoProvider.prototype.deleteTodo = function(index, callback)
+RestTodoProvider.prototype.deleteTodo = function(id, callback)
 {
     var ajaxRequest = $.ajax({
-        url: 'api/todos/' + index,
+        url: 'api/todos/' + id,
         type: "DELETE",
         async: true
     });

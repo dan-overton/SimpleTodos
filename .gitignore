@@ -1,4 +1,7 @@
 # Created by .gitignore support plugin (hsz.mobi)
+### Project Specific
+credentials.js
+
 ### Node template
 # Logs
 logs

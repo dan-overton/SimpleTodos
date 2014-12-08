@@ -11,6 +11,11 @@
   "dependencies": {
     "body-parser": "^1.10.0",
     "express": "^4.10.4",
+    "mongoose": "^3.8.20",
     "morgan": "^1.5.0"
+  },
+  "repository" :
+  { "type" : "git",
+    "url" : "http://github.com/doverton51/SimpleTodos.git"
   }
 }

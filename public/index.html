@@ -87,7 +87,7 @@
 							<table class="table">
 								{{#each todos}}
 								<tr>
-									<td><input class="guiControl" type="checkbox" {{checked this.completed}} onchange="addOrUpdateList({{@index}}, this.checked)"><a href="/edit/{{@index}}" class="guiControl"><span id="todo{{@index}}" class="completed{{this.completed}}"> {{this.todo}}</span></a></td><td><button type="button" class="btn btn-danger guiControl" onclick="deleteTodo({{@index}})"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</button></td>
+									<td><input class="guiControl" type="checkbox" {{checked this.completed}} onchange="updateList('{{this.id}}', this.checked)"><a href="/edit/{{this.id}}" class="guiControl"><span id="todo{{this.id}}" class="completed{{this.completed}}"> {{this.todo}}</span></a></td><td><button type="button" class="btn btn-danger guiControl" onclick="deleteTodo('{{this.id}}')"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</button></td>
 								</tr>
 								{{/each}}
 							</table>
@@ -102,7 +102,7 @@
 		
 		<script id="item-template" type="text/x-handlebars-template">
 			<div class="col-md-12">
-				<form onsubmit="return addOrUpdateForm({{index}})" role="form">
+				<form onsubmit="return addOrUpdateForm('{{currentTodo.id}}')" role="form">
 					<div class="form-group">
 						<label for="todo">Todo</label>
 						<input type="text" name="todo" value="{{currentTodo.todo}}" id="todo" class="form-control" placeholder="e.g. Fix the fridge..." required>
@@ -113,7 +113,7 @@
 							</label>
 						</div>
 					</div>
-					{{#if index}}
+					{{#if currentTodo}}
 						<input type="submit" value="Save" class="btn btn-primary guiControl">
 					{{else}}
 						<input type="submit" value="Add" class="btn btn-primary guiControl">
@@ -146,7 +146,7 @@
 
 			page('/', index);
 			page('/add', singleItem);
-			page('/edit/:index', singleItem);
+			page('/edit/:id', singleItem);
 			page('/error', error);
 
 			page();
@@ -180,14 +180,14 @@
 				var template = Handlebars.compile(source);
 				var context = {};
 
-				if(ctx.params.index) {
-					todoProvider.getTodo(ctx.params.index, function(err, todo) {
+				if(ctx.params.id) {
+					todoProvider.getTodo(ctx.params.id, function(err, todo) {
 						if(err)
 						{
 							page('/error');
 						}
 
-						context = {index: ctx.params.index, currentTodo: todo};
+						context = {currentTodo: todo};
 						document.querySelector('#content').innerHTML = template(context);
 						document.querySelector('input[name="todo"]').focus();
 						document.title = "Todos - Edit";
@@ -201,21 +201,21 @@
 				}
 			}
 
-			function addOrUpdateList(index, completed)
+			function updateList(id, completed)
 			{
 				toggleGui(false);
-				addOrUpdateItem({todo: document.querySelector('#todo' + index).textContent.trim(), completed: completed}, index);
+				addOrUpdateItem({todo: document.querySelector('#todo' + id).textContent.trim(), completed: completed}, id);
 				return false;
 			}
 
-			function addOrUpdateForm(index)
+			function addOrUpdateForm(id)
 			{
 				toggleGui(false);
-				addOrUpdateItem({todo: document.querySelector('input[name="todo"]').value, completed: document.querySelector('input[name="completed"]').checked}, index);
+				addOrUpdateItem({todo: document.querySelector('input[name="todo"]').value, completed: document.querySelector('input[name="completed"]').checked}, id);
 				return false;
 			}
 
-			function addOrUpdateItem(newTodo, index)
+			function addOrUpdateItem(newTodo, id)
 			{
 				var callback =  function(err, data) {
 					if(err)
@@ -228,9 +228,9 @@
 					}
 				};
 
-				if(typeof(index) !== 'undefined')
+				if(id !== '')
 				{
-					todoProvider.updateTodo(index, newTodo, callback);
+					todoProvider.updateTodo(id, newTodo, callback);
 				}
 				else
 				{
@@ -238,10 +238,10 @@
 				}
 			}
 
-			function deleteTodo(index)
+			function deleteTodo(id)
 			{
 				toggleGui(false);
-				todoProvider.deleteTodo(index, function(err, data) {
+				todoProvider.deleteTodo(id, function(err, data) {
 					if(err)
 					{
 						page('/error');
@@ -250,7 +250,6 @@
 					{
 						page('/');
 					}
-
 				});
 			}
 

@@ -6,3 +6,4 @@ A sample web app created to practice with:
 * Bootstrap
 * LocalStorage
 * Mongo
+* REST
