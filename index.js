@@ -5,9 +5,9 @@ var bodyparser = require('body-parser');
 var morgan = require('morgan');
 var express = require('express');
 var mongoose = require('mongoose');
-
+var https = require('https');
+var fs = require('fs');
 var credentials = require('./credentials.js');  //our gitignored credentials file
-
 var Todo = require('./models/todos.js');
 
 var app = express();
@@ -143,6 +143,12 @@ app.use(function(err, req, res, next){
     res.type('text/plain');
     res.sendStatus(500);
 });
-app.listen(app.get('port'), function() {
+
+var options = {
+    key: fs.readFileSync(__dirname + '/simpletodos.pem'),
+    cert: fs.readFileSync(__dirname + '/simpletodos.crt')
+};
+
+https.createServer(options, app).listen(app.get('port'), function() {
     console.log('Express started on http://localhost:' + app.get('port') + '; press Ctrl-C to terminate.');
 });

@@ -14,8 +14,8 @@
     "mongoose": "^3.8.20",
     "morgan": "^1.5.0"
   },
-  "repository" :
-  { "type" : "git",
-    "url" : "http://github.com/doverton51/SimpleTodos.git"
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/doverton51/SimpleTodos.git"
   }
 }

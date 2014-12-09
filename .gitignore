@@ -2,6 +2,10 @@
 ### Project Specific
 credentials.js
 
+# Https
+simpletodos.crt
+simpletodos.pem
+
 ### Node template
 # Logs
 logs
