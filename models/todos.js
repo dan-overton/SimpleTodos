@@ -3,8 +3,10 @@
  */
 var mongoose = require('mongoose');
 var todoSchema = mongoose.Schema({
-    todo: String,
-    completed: Boolean
+    todo: {type: String, required: true},
+    completed: {type: Boolean, required: true},
+    owninguser: {type: mongoose.Schema.ObjectId, required: true}
 });
+
 var Todo = mongoose.model('Todo', todoSchema);
 module.exports = Todo;
