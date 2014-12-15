@@ -7,6 +7,7 @@ var SALT_WORK_FACTOR = 10;
 
 var clientSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: false },
+    email: { type: String, required: true, unique: false },
     redirectURI: { type: String, required: true, unique: true},
     secret: { type: String, required: true}
 });
@@ -19,7 +20,7 @@ clientSchema.pre('save', function(next) {
     var clientToSave = this;
 
     //update where password not changed, no need to hash
-    if(!clientToSave.isModified('password'))
+    if(!clientToSave.isModified('secret'))
     {
         return next();
     }

@@ -28,6 +28,11 @@ var connectionString = "";
 
 app.set('port', process.env.PORT || 3000);
 
+var handlebars = require('express-handlebars').create({ defaultLayout:'main' });
+app.engine('handlebars', handlebars.engine);
+app.set('view engine', 'handlebars');
+
+
 switch(app.get('env')){
     case 'development':
         app.use(morgan('dev'));
@@ -104,6 +109,8 @@ app.post('/register', uiRoutes.createUser);
 app.get('/logout', uiRoutes.logout);
 
 //REST API ROUTES
+app.get('/api/register', apiRoutes.registerForm);
+app.post('/api/register', apiRoutes.registerClient);
 app.get('/api/todos', ensureAuthenticated, apiRoutes.getAllTodos);
 app.get('/api/todos/:id', ensureAuthenticated, apiRoutes.getSingleTodo);
 app.post('/api/todos', ensureAuthenticated, apiRoutes.createTodo);

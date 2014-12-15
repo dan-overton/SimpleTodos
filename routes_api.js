@@ -2,8 +2,38 @@
  * Created by Daniel Overton on 11/12/2014.
  */
 var Todo = require('./models/todos.js');
+var Client = require('./models/clients.js');
+var uuid = require('node-uuid');
 
 exports = module.exports = {};
+
+exports.registerForm = function(req, res)
+{
+    res.render('register_client');
+};
+
+exports.registerClient = function(req, res)
+{
+    var clientSecret = uuid.v4();
+
+    var newClient = new Client(( {
+        name: req.body.clientName,
+        email: req.body.email,
+        redirectURI: req.body.redirectURI,
+        secret: clientSecret
+    }));
+
+    newClient.save(function(err) {
+        if(err)
+        {
+            res.sendStatus(500);
+        }
+        else
+        {
+            res.render('client_confirm', {clientId: newClient.id, clientSecret: clientSecret});
+        }
+    });
+};
 
 exports.getAllTodos = function(req, res)
 {

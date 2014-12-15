@@ -20,12 +20,13 @@ exports.index = function(req, res)
 
 exports.showLoginForm = function(req, res)
 {
-    res.sendFile('pages/login.html', {root: __dirname});
+    res.render('login');
 };
 
 exports.showRegForm = function(req, res)
 {
-    res.sendFile('pages/register.html', {root: __dirname});
+    res.render('register');
+
 };
 
 exports.logout = function(req, res)
