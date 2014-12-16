@@ -32,17 +32,20 @@ exports.showRegForm = function(req, res)
 exports.logout = function(req, res)
 {
     req.logout();
-    res.redirect('/');
+    //logout only removes the user from the session, does not destroy it. We want ours gone.
+    req.session.destroy(function(err) {
+        res.redirect('/');
+    });
 };
 
 exports.createUser = function(req, res)
 {
     //TODO: Review escaping input
-    var newUser = new User(( {
+    var newUser = new User( {
         username: req.body.username,
         email: req.body.email,
         password: req.body.password
-    }));
+    });
 
     newUser.save(function(err) {
         if(err)

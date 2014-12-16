@@ -5,20 +5,26 @@
 var bodyparser = require('body-parser');
 var cookieparser = require('cookie-parser');
 var expresssession = require('express-session');
-var sessionmongoose = require('session-mongoose');
-var connect = require('connect');   //for session-mongoose
 var morgan = require('morgan');
 var express = require('express');
 var mongoose = require('mongoose');
+var mongoosesession = require('mongoose-session');
 var https = require('https');
 var fs = require('fs');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
+var BasicStrategy = require('passport-http').BasicStrategy;
+var BearerStrategy = require('passport-http-bearer').Strategy;
 //TODO: Do I need method override? Used in example.
 
 var credentials = require('./credentials.js');  //our gitignored credentials file
+
 var User = require('./models/users.js');
+var Client = require('./models/clients.js');
+var AccessToken = require('./models/accesstokens.js');
+
 var uiRoutes = require('./routes_ui.js');
+var authRoutes = require('./routes_auth.js');
 var apiRoutes = require('./routes_api.js');
 //endregion includes
 
@@ -73,6 +79,42 @@ passport.use(new LocalStrategy(function(username, password, done) {
     });
 }));
 
+passport.use(new BasicStrategy(
+    function(clientId, secret, done) {
+       Client.findById(clientId, function(err, client) {
+           if (err) { return done(err); }
+           if (!client) { return done(null, false); }
+           client.compareSecret(secret, function(err, isMatch) {
+               if (err) { return done(err); }
+               if(isMatch === false)
+               {
+                   return done(null, false);
+               }
+
+               return done(null, client);
+           });
+        });
+    }
+));
+
+passport.use(new BearerStrategy(
+    function(accessToken, done) {
+        AccessToken.findOne({token: accessToken}, function(err, token) {
+            if (err) { return done(err); }
+            if (!token) { return done(null, false); }
+
+            User.findById(token.user.toString(), function(err, user) {
+                if (err) { return done(err); }
+                if (!user) { return done(null, false); }
+                // to keep this example simple, restricted scopes are not implemented,
+                // and this is just for illustrative purposes
+                var info = { scope: '*' };
+                done(null, user, info);
+            });
+        });
+    }
+));
+
 // Simple route middleware to ensure user is authenticated. Otherwise send to login page.
 ensureAuthenticated = function ensureAuthenticated(req, res, next) {
     if (req.isAuthenticated()) { return next(); }
@@ -88,8 +130,7 @@ var opts = {
 
 mongoose.connect(connectionString, opts);
 
-var MongoSessionStore = sessionmongoose(connect);
-var sessionStore = new MongoSessionStore({ url: connectionString });
+var sessionStore = mongoosesession(mongoose);
 
 app.use(bodyparser.urlencoded({extended: false})); //use normal querystring
 app.use(cookieparser(credentials.cookieSecret));
@@ -103,19 +144,27 @@ app.use(express.static(__dirname + '/public'));
 //WEBAPP UI ROUTES
 app.get('/', uiRoutes.index);
 app.get('/login', uiRoutes.showLoginForm);
-app.post('/login', passport.authenticate('local', { successRedirect: '/', failureRedirect: '/', failureFlash: false }));
+app.post('/login',
+    function(req, res, next) {
+        passport.authenticate('local', { successRedirect: req.session.returnTo ? req.session.returnTo : '/', failureRedirect: '/', failureFlash: false })(req, res, next);
+    });
 app.get('/register',uiRoutes.showRegForm);
 app.post('/register', uiRoutes.createUser);
 app.get('/logout', uiRoutes.logout);
 
+//OAUTH2 ROUTES
+app.get('/api/dialog/authorize', authRoutes.authorization);
+app.post('/api/dialog/authorize/decision', authRoutes.decision);
+app.post('/api/oauth/token', authRoutes.token);
+
 //REST API ROUTES
 app.get('/api/register', apiRoutes.registerForm);
 app.post('/api/register', apiRoutes.registerClient);
-app.get('/api/todos', ensureAuthenticated, apiRoutes.getAllTodos);
-app.get('/api/todos/:id', ensureAuthenticated, apiRoutes.getSingleTodo);
-app.post('/api/todos', ensureAuthenticated, apiRoutes.createTodo);
-app.put('/api/todos/:id', ensureAuthenticated, apiRoutes.updateTodo);
-app.delete('/api/todos/:id', ensureAuthenticated, apiRoutes.deleteTodo);
+app.get('/api/todos', apiRoutes.getAllTodos);
+app.get('/api/todos/:id', apiRoutes.getSingleTodo);
+app.post('/api/todos', apiRoutes.createTodo);
+app.put('/api/todos/:id', apiRoutes.updateTodo);
+app.delete('/api/todos/:id', apiRoutes.deleteTodo);
 //endregion
 
 //region Error Handlers

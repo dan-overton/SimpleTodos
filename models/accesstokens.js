@@ -3,6 +3,7 @@
  */
 var mongoose = require('mongoose');
 var accessTokenSchema = mongoose.Schema({
+    token: {type: String, required: true, unique: true},
     client: {type: mongoose.Schema.ObjectId, required: true},
     user: {type: mongoose.Schema.ObjectId, required: true}
 });

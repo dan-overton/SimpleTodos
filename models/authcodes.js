@@ -3,9 +3,10 @@
  */
 var mongoose = require('mongoose');
 var authCodeSchema = mongoose.Schema({
-    client: {type: mongoose.Schema.ObjectId, required: true},
-    redirectURI: { type: String, required: true, unique: true},
-    user: {type: mongoose.Schema.ObjectId, required: true}
+    code: {type: String, required: true, unique: true},
+    client: {type: mongoose.Schema.ObjectId, required: false},
+    redirectURI: { type: String, required: true, unique: false},
+    user: {type: mongoose.Schema.ObjectId, required: false}
 });
 
 var AccessToken = mongoose.model('AuthCode', authCodeSchema);

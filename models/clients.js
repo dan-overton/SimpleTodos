@@ -40,8 +40,8 @@ clientSchema.pre('save', function(next) {
     });
 });
 
-//utility function to check if password matches
-clientSchema.methods.comparePassword = function(candidateSecret, callback) {
+//utility function to check if secret matches
+clientSchema.methods.compareSecret = function(candidateSecret, callback) {
     //doesn't require salt as bcrypt concats it into the hash
     bcrypt.compare(candidateSecret, this.secret, function(err, isMatch) {
         if(err)
