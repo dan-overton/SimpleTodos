@@ -1,14 +1,15 @@
 /**
  * Created by Daniel Overton on 07/12/2014.
  */
-var RestTodoProvider = function()
+var RestTodoProvider = function(csrfToken)
 {
+    this.csrfToken = csrfToken;
 };
 
 RestTodoProvider.prototype.getTodosFromStorage = function(callback)
 {
     var ajaxRequest = $.ajax({
-        url: 'api/todos/',
+        url: 'webui/todos/',
         type: "GET",
         dataType: 'json',
         async: true
@@ -31,7 +32,7 @@ RestTodoProvider.prototype.getAllTodos = function(callback)
 RestTodoProvider.prototype.getTodo = function(id, callback)
 {
     var ajaxRequest = $.ajax({
-        url: 'api/todos/' + id,
+        url: 'webui/todos/' + id,
         type: "GET",
         async: true
     });
@@ -47,9 +48,9 @@ RestTodoProvider.prototype.getTodo = function(id, callback)
 
 RestTodoProvider.prototype.addTodo = function(newTodo, callback) {
     var ajaxRequest = $.ajax({
-        url: 'api/todos/',
+        url: 'webui/todos/',
         type: "POST",
-        data: {data: JSON.stringify(newTodo)},
+        data: {data: JSON.stringify(newTodo), _csrf: this.csrfToken},
         async: true
     });
 
@@ -65,9 +66,9 @@ RestTodoProvider.prototype.addTodo = function(newTodo, callback) {
 RestTodoProvider.prototype.updateTodo = function(id, updatedTodo, callback)
 {
     var ajaxRequest = $.ajax({
-        url: 'api/todos/' + id,
+        url: 'webui/todos/' + id,
         type: "PUT",
-        data: {data: JSON.stringify(updatedTodo)},
+        data: {data: JSON.stringify(updatedTodo), _csrf: this.csrfToken},
         async: true
     });
 
@@ -83,9 +84,10 @@ RestTodoProvider.prototype.updateTodo = function(id, updatedTodo, callback)
 RestTodoProvider.prototype.deleteTodo = function(id, callback)
 {
     var ajaxRequest = $.ajax({
-        url: 'api/todos/' + id,
+        url: 'webui/todos/' + id,
         type: "DELETE",
-        async: true
+        async: true,
+        data: {_csrf: this.csrfToken}
     });
 
     ajaxRequest.done(function(data) {

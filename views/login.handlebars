@@ -1,10 +1,11 @@
 <div id="content" class="row">
     <form action="/login" method="post" role="form">
         <div class="form-group">
+            <input type="hidden" name="_csrf" value="{{csrfToken}}">
             <label for="username">Username</label>
             <input type="text" name="username" id="username" class="form-control" placeholder="Please Enter Username" required>
             <label for="password">Password</label>
-            <input type="password" name="password" id="password" class="form-control" placeholder="Please Enter Password" required>
+            <input type="password" name="password" id="password" class="form-control" autocomplete="off" placeholder="Please Enter Password" required>
         </div>
 
         <input type="submit" value="Login" class="btn btn-primary">

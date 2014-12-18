@@ -4,21 +4,20 @@
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		
+
 		<title>Todos</title>
 
 		<base href="/">
 
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
 
-		<script src="https://cdn.rawgit.com/visionmedia/page.js/master/page.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"></script>
-		<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
-
-		<script src="scripts/todoProviderLocalStorage.js"></script>
 		<script src="scripts/todoProviderREST.js"></script>
+
+        <script src="https://cdn.rawgit.com/visionmedia/page.js/master/page.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"></script>
+        <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 
 		<script>
 			Handlebars.registerHelper('checked', function(currentValue) {
@@ -67,60 +66,59 @@
 					</div><!-- /.navbar-collapse -->
 				</div><!-- /.container-fluid -->
 			</nav>
-			
+
 			<main>
 				<div id="content" class="row">
-				
+
 				</div>
 			</main>
-			
+
 			<footer>
 				<h6>Routing: <a href="http://visionmedia.github.io/page.js/">Page.js</a>, Templating: <a href="http://handlebarsjs.com/">Handlebars</a>, CSS: <a href="http://getbootstrap.com/">Bootstrap</a>,
-					Persistence:
-					<select onchange="toggleProvider()" id="providerToggle"><option id="RestOption"><a href="http://en.wikipedia.org/wiki/Representational_state_transfer">REST</a></option><option id="LocalOption"><a href="http://diveintohtml5.info/storage.html">LocalStorage</a></option></select></h6>
+					Persistence: <a href="http://en.wikipedia.org/wiki/Representational_state_transfer">REST</a></h6>
 			</footer>
 		</div>
 		
 		<script id="index-template" type="text/x-handlebars-template">
 			<div class="col-md-12">
 				<h2> Current Todos <button type="button" class="btn btn-primary guiControl" onclick="page('/add')">Add Todo</button></h2>
-				{{#if todos}}
+				\{{#if todos}}
 					<form role="form" onsubmit="return false">
 						<div class=table-responsive">
 							<table class="table">
-								{{#each todos}}
+								\{{#each todos}}
 								<tr>
-									<td><input class="guiControl" type="checkbox" {{checked this.completed}} onchange="updateList('{{this.id}}', this.checked)"><a href="/edit/{{this.id}}" class="guiControl"><span id="todo{{this.id}}" class="completed{{this.completed}}"> {{this.todo}}</span></a></td><td><button type="button" class="btn btn-danger guiControl" onclick="deleteTodo('{{this.id}}')"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</button></td>
+									<td><input class="guiControl" type="checkbox" \{{checked this.completed}} onchange="updateList('\{{this.id}}', this.checked)"><a href="/edit/\{{this.id}}" class="guiControl"><span id="todo\{{this.id}}" class="completed\{{this.completed}}"> \{{this.todo}}</span></a></td><td><button type="button" class="btn btn-danger guiControl" onclick="deleteTodo('\{{this.id}}')"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</button></td>
 								</tr>
-								{{/each}}
+								\{{/each}}
 							</table>
 						</div>
 					</form>
-				{{else}}
+				\{{else}}
 					<p> You have nothing to do! Maybe celebrate? </p>
-				{{/if}}
+				\{{/if}}
 			</div>
 
 		</script>
 		
 		<script id="item-template" type="text/x-handlebars-template">
 			<div class="col-md-12">
-				<form onsubmit="return addOrUpdateForm('{{currentTodo.id}}')" role="form">
+				<form onsubmit="return addOrUpdateForm('\{{currentTodo.id}}')" role="form">
 					<div class="form-group">
 						<label for="todo">Todo</label>
-						<input type="text" name="todo" value="{{currentTodo.todo}}" id="todo" class="form-control" placeholder="e.g. Fix the fridge..." required>
+						<input type="text" name="todo" value="\{{currentTodo.todo}}" id="todo" class="form-control" placeholder="e.g. Fix the fridge..." required>
 						<div class="checkbox">
 							<label>
-								<input type="checkbox" name="completed"  {{checked currentTodo.completed}} id="completed">
+								<input type="checkbox" name="completed"  \{{checked currentTodo.completed}} id="completed">
 								Completed?
 							</label>
 						</div>
 					</div>
-					{{#if currentTodo}}
+					\{{#if currentTodo}}
 						<input type="submit" value="Save" class="btn btn-primary guiControl">
-					{{else}}
+					\{{else}}
 						<input type="submit" value="Add" class="btn btn-primary guiControl">
-					{{/if}}
+					\{{/if}}
 
 					<input type="button" value="Cancel" class="btn btn-default guiControl" onclick="page('/')">
 				</form>
@@ -134,18 +132,7 @@
 		</script>
 		
 		<script>
-			var todoProvider = {};
-
-			if(document.cookie.indexOf('provider=LocalStorage') > -1)
-			{
-				todoProvider = new LocalTodoProvider();
-				document.getElementById('providerToggle').value = "LocalStorage";
-			}
-			else
-			{
-				todoProvider = new RestTodoProvider();
-				document.getElementById('providerToggle').value = "REST";
-			}
+			var todoProvider =  new RestTodoProvider('{{csrfToken}}');
 
 			page('/', index);
 			page('/add', singleItem);
@@ -256,22 +243,6 @@
 				});
 			}
 
-			function toggleProvider()
-			{
-				if(document.getElementById("providerToggle").value === "REST")
-				{
-					todoProvider = new RestTodoProvider();
-					document.cookie="provider=REST";
-				}
-				else
-				{
-					todoProvider = new LocalTodoProvider();
-					document.cookie="provider=LocalStorage";
-				}
-
-				page('/');
-			}
-
 			function toggleGui(on)
 			{
 				var gui = document.querySelectorAll('.guiControl');
@@ -280,7 +251,6 @@
 					gui[i].setAttribute('disabled', !on);
 				}
 			}
-
 		</script>
 	</body>
 </html>

@@ -4,11 +4,11 @@
     <form action="/api/register" method="post" role="form">
         <div class="form-group">
             <label for="clientName">Client Name</label>
-            <input type="text" name="clientName" id="clientName" class="form-control" placeholder="Please Enter the name of your client app" required>
+            <input type="text" name="clientName" id="clientName" autocomplete="off" class="form-control" placeholder="Please Enter the name of your client app" required>
             <label for="email">Email Address</label>
-            <input type="email" name="email" id="email" class="form-control" placeholder="e.g. asmith@mymail.com" required>
+            <input type="email" name="email" id="email" class="form-control" autocomplete="off" placeholder="e.g. asmith@mymail.com" required>
             <label for="redirectURI">Client Name</label>
-            <input type="text" name="redirectURI" id="redirectURI" class="form-control" placeholder="e.g. https://www.myapp.com/callback" required>
+            <input type="text" name="redirectURI" id="redirectURI" class="form-control" autocomplete="off" placeholder="e.g. https://www.myapp.com/callback" required>
         </div>
 
         <input type="submit" value="Register" class="btn btn-primary">

@@ -3,11 +3,12 @@
  */
 var oauth2orize = require('oauth2orize');
 var passport = require('passport');
-var uuid = require('node-uuid');
+
 
 var Client = require('./models/clients.js');
 var AuthCode = require('./models/authcodes.js');
 var Token = require('./models/accesstokens.js');
+var User = require('./models/users.js');
 
 exports = module.exports = {};
 
@@ -46,6 +47,7 @@ server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, do
     })
 }));
 
+
 //set up the server to swap an auth code for an access token
 server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, done) {
     AuthCode.findOne({ code: code}, function(err, authcode) {
@@ -76,15 +78,44 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
                return done(err);
             }
 
-            var tokenToIssue = uuid.v4();
-            var t = new Token({token: tokenToIssue, client: authcode.client, user: authcode.user});
+            var t = new Token({client: authcode.client, user: authcode.user});
 
             t.save(function(err) {
                 if(err) {
                     return done(err);
                 }
 
-                done(null, tokenToIssue);
+                done(null, t.token);
+            })
+        });
+    });
+}));
+
+//set up the server to exchange a user's username and password for an access token.
+//This is to be limited to use by 1st party clients only.
+server.exchange(oauth2orize.exchange.password(function(client, username, password, scope, done) {
+    User.findOne({username: username}, function (err, user) {
+        if (err) {
+            return done(err);
+        }
+        if (!user) {
+            return done(null, false);
+        }
+        user.comparePassword(password, function (err, isMatch) {
+            if (err) {
+                return done(err);
+            }
+            if (!isMatch) {
+                return done(null, false);
+            }
+            var t = new Token({client: client.id, user: user.id});
+
+            t.save(function (err) {
+                if (err) {
+                    return done(err);
+                }
+
+                done(null, t.token);
             })
         });
     });
@@ -93,7 +124,7 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
 //get the user to authorize the request.
 //If they are not logged in, get them to do so.
 //Then check the client id is valid and pointing to the registered redirectURI
-//then presen the user with a dialog asking for their permission.
+//then present the user with a dialog asking for their permission.
 exports.authorization = [
 
     function(req, res, next)
