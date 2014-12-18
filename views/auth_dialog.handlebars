@@ -2,7 +2,7 @@
 <p><b>{{clientName}}</b> is requesting access to your account so they can use your data in their app.</p>
 <p>Do you approve?</p>
 
-<form action="/api/dialog/authorize/decision" method="post">
+<form action="/api/oauth/dialog/authorize/decision" method="post">
     <input name="transaction_id" type="hidden" value="{{transactionID}}">
     <div>
         <input type="submit" value="Allow" id="allow">

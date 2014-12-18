@@ -1,0 +1,23 @@
+<h2>SimpleTodos API</h2>
+<h3>Welcome to the SimpleTodos API Page</h3>
+
+<p>Please see below for details of how to access the API</p>
+
+<h3>Authentication</h3>
+
+<p>All clients must be registered and authenticated via OAuth2 using the authorization code grant type</p>
+<p>To register your client please click <a href="/api/register">here</a></p>
+
+<h3>API Endpoints</h3>
+<table class="table">
+    <thead>
+        <tr><th>Endpoint</th><th>HTTP Verb</th><th>Parameters</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>/api/todos</td><td>GET</td><td>None</td><td>Returns a JSON list of todos for the authenticated user</td></tr>
+        <tr><td>/api/todos/:id</td><td>GET</td><td>None</td><td>Returns a JSON item for the specified todo</td></tr>
+        <tr><td>/api/todos</td><td>POST</td><td>None</td><td>Creates a new Todo. Returns a JSON object containing it's ID</td></tr>
+        <tr><td>/api/todos/:id</td><td>PUT</td><td>None</td><td>Updates the specified TODO</td></tr>
+        <tr><td>/api/todos/:id</td><td>Delete</td><td>None</td><td>Deletes the specified TODO</td></tr>
+    </tbody>
+</table>

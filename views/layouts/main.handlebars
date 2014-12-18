@@ -16,26 +16,34 @@
     <script src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"></script>
 </head>
 <body>
-<div class="container">
-    <nav class="navbar navbar-default" role="navigation">
-        <div class="container-fluid">
-            <!-- Brand and toggle get grouped for better mobile display -->
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="#">Todos</a>
+    <div class="container">
+        <nav class="navbar navbar-default" role="navigation">
+            <div class="container-fluid">
+                <!-- Brand and toggle get grouped for better mobile display -->
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="/">Todos</a>
+                </div>
+            </div><!-- /.container-fluid -->
+        </nav>
+        {{#if flash}}
+            <div class="alert alert-dismissible alert-{{flash.type}}">
+                <button type="button" class="close" data-dismiss="alert"  aria-hidden="true">&times;</button>
+                <strong>{{flash.intro}}</strong>
+                {{{flash.message}}}
             </div>
-        </div><!-- /.container-fluid -->
-    </nav>
-
-    <main>
-        {{{body}}}
-    </main>
-</div>
-
+        {{/if}}
+        <main>
+            {{{body}}}
+        </main>
+        <footer>
+            <h6>Please see <a href="/api">here</a> for details on our API</h6>
+        </footer>
+    </div>
 </body>
 </html>

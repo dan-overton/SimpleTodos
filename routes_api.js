@@ -36,8 +36,13 @@ exports.registerClient = function(req, res)
     });
 };
 
-exports.getAllTodos = [passport.authenticate('bearer', { session: false }), ops.getAllTodos];
-exports.getSingleTodo = [passport.authenticate('bearer', { session: false }), ops.getSingleTodo];
-exports.createTodo = [passport.authenticate('bearer', { session: false }), ops.createTodo];
-exports.updateTodo = [passport.authenticate('bearer', { session: false }), ops.updateTodo];
-exports.deleteTodo = [passport.authenticate('bearer', { session: false }), ops.deleteTodo];
+exports.showLandingPage = function(req, res) {
+    res.render('api_landing');
+};
+
+//TODO: Write a custom failure handler for these. if XHR, JSON response. If not, landing page w/flash message.
+exports.getAllTodos = [passport.authenticate('bearer', { session: false, failureRedirect: '/api'}), ops.getAllTodos];
+exports.getSingleTodo = [passport.authenticate('bearer', { session: false, failureRedirect: '/api' }), ops.getSingleTodo];
+exports.createTodo = [passport.authenticate('bearer', { session: false, failureRedirect: '/api' }), ops.createTodo];
+exports.updateTodo = [passport.authenticate('bearer', { session: false, failureRedirect: '/api' }), ops.updateTodo];
+exports.deleteTodo = [passport.authenticate('bearer', { session: false, failureRedirect: '/api' }), ops.deleteTodo];

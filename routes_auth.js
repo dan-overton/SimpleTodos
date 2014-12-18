@@ -4,7 +4,6 @@
 var oauth2orize = require('oauth2orize');
 var passport = require('passport');
 
-
 var Client = require('./models/clients.js');
 var AuthCode = require('./models/authcodes.js');
 var Token = require('./models/accesstokens.js');
@@ -29,7 +28,6 @@ server.deserializeClient(function(id, done) {
 //set up the server to grant authorization codes (long lasting, secure, refreshable)
 server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, done) {
     var code = new AuthCode({
-        code: uuid.v4(),
         client: client.id,
         redirectURI: redirectURI,
         user: user.id
@@ -46,7 +44,6 @@ server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, do
         }
     })
 }));
-
 
 //set up the server to swap an auth code for an access token
 server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, done) {
@@ -78,15 +75,27 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
                return done(err);
             }
 
-            var t = new Token({client: authcode.client, user: authcode.user});
+            Token.findOne({client: authcode.client, user: authcode.user}, function(err, existingToken)
+            {
+                if(err) { return done(err) }
 
-            t.save(function(err) {
-                if(err) {
-                    return done(err);
+                if(existingToken)
+                {
+                    //this client already has a valid access token for this user, so return that.
+                    done(null, existingToken.token);
                 }
+                else {
+                    var t = new Token({client: authcode.client, user: authcode.user});
 
-                done(null, t.token);
-            })
+                    t.save(function (err) {
+                        if (err) {
+                            return done(err);
+                        }
+
+                        done(null, t.token);
+                    });
+                }
+            });
         });
     });
 }));
@@ -108,15 +117,28 @@ server.exchange(oauth2orize.exchange.password(function(client, username, passwor
             if (!isMatch) {
                 return done(null, false);
             }
-            var t = new Token({client: client.id, user: user.id});
 
-            t.save(function (err) {
-                if (err) {
-                    return done(err);
+            Token.findOne({client: client.id, user: user.id}, function(err, existingToken)
+            {
+                if(err) { return done(err) }
+
+                if(existingToken)
+                {
+                    //this client already has a valid access token for this user, so return that.
+                    done(null, existingToken.token);
                 }
+                else {
+                    var t = new Token({client: client.id, user: user.id});
 
-                done(null, t.token);
-            })
+                    t.save(function (err) {
+                        if (err) {
+                            return done(err);
+                        }
+
+                        done(null, t.token);
+                    });
+                }
+            });
         });
     });
 }));
@@ -125,13 +147,13 @@ server.exchange(oauth2orize.exchange.password(function(client, username, passwor
 //If they are not logged in, get them to do so.
 //Then check the client id is valid and pointing to the registered redirectURI
 //then present the user with a dialog asking for their permission.
+
 exports.authorization = [
 
     function(req, res, next)
     {
         if(!req.isAuthenticated()) {
-            req.session.returnTo = req.originalUrl;
-            res.redirect('/login');
+            res.redirect('/api/oauth/login');
         }
         else
         {
@@ -170,13 +192,11 @@ exports.authorization = [
 //The user's allow / deny decision is routed to here.
 //If the user is logged in this will then have the server process the decision
 //if not it redirects them to the login screen.
-//Then the server processes the decision
 exports.decision = [
     function(req, res, next)
     {
         if(!req.isAuthenticated()) {
-            req.session.returnTo = req.originalUrl;
-            res.redirect('/login');
+            res.redirect('/api/oauth/login');
         }
         else
         {
@@ -188,3 +208,13 @@ exports.decision = [
 
 //authenticate the client, then issue them an access token if they have the appropriate grant.
 exports.token = [  passport.authenticate('basic', {session: false}), server.token(), server.errorHandler() ];
+
+exports.processOAuthLogin = function(req, res, next)
+{
+    passport.authenticate('local', { successRedirect: '/api/oauth/dialog/authorize/decision', failureRedirect: '/api/oauth/login', failureFlash: false })(req, res, next);
+};
+
+exports.showOAuthLoginForm = function(req, res, next)
+{
+    res.render('oauth_login');
+};

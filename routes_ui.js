@@ -4,26 +4,25 @@
 var User = require('./models/users.js');
 var request = require('request');
 var credentials = require('./credentials');
-var passport = require('passport');
 
 exports = module.exports = {};
 
 // Simple route middleware to ensure user is authenticated. Otherwise send to login page.
 var ensureAuthenticated = function ensureAuthenticated(req, res, next) {
-    if (req.isAuthenticated()) { return next(); }
+    if (req.session.apiToken) { return next(); }
     res.redirect('/login')
 };
 
 exports.index = function(req, res)
 {
-    if(req.isAuthenticated()) {
+    if(req.session.apiToken) {
         //render app
         res.render('webui/webapp', {layout: false, root: __dirname, csrfToken: req.csrfToken()});
     }
     else
     {
         //send to login
-        res.redirect('/login');
+        res.render('login', {csrfToken: req.csrfToken()});
     }
 };
 
@@ -32,57 +31,48 @@ exports.showLoginForm = function(req, res)
     res.render('login', {csrfToken: req.csrfToken()});
 };
 
-exports.processLogin = function(req, res, next) {
-    var redirTo = "/";
-    //if they are logging in on the website, this won't be set.
-    //if logging in to auth an oauth request, it will be
-    //TODO: Create a separate login screen / route for oauth. Really separate this (thought).
+exports.processWebUILogin = function(req, res, next)
+{
+    //try to get a bearer token from our api.
+    request.post(credentials.webapp.serverProtocol + credentials.webapp.clientid + ':' + credentials.webapp.clientsecret + '@' + credentials.webapp.server + '/api/oauth/token',
+        {form: {grant_type: 'password', username: req.body.username, password: req.body.password}}, function(err, msg, body) {
+            if(err) { return next(err);}
 
-    //oauth verify
-    if(req.session.ReturnTo) {
-        redirTo = req.session.ReturnTo;
-        delete req.session.ReturnTo;
-        passport.authenticate('local', { successRedirect: redirTo, failureRedirect: '/', failureFlash: false })(req, res, next);
-    }
-    else
-    {
-        //webui login
-        passport.authenticate('local',function(err, user, info) {
-            if (err) { return next(err); }
-            if (!user) { return res.redirect('/'); }
-
-            //get a bearer token from our api.
-            request.post(credentials.webapp.serverProtocol + credentials.webapp.clientid + ':' + credentials.webapp.clientsecret + '@' + credentials.webapp.server + '/api/oauth/token',
-                {form: {grant_type: 'password', username: req.body.username, password: req.body.password}}, function(err, msg, body) {
-                    if(err) { return next(err);}
-
-                    if(msg.statusCode!==200)
-                    {
-                        return next(err);
-                    }
-
+            switch(msg.statusCode)
+            {
+                case 200:
+                    //we're in.
                     var returnedJson = JSON.parse(body);
 
                     req.session.apiToken = returnedJson.access_token;
-                    req.logIn(user, function(err) {
-                        if(err) { return next(err) }
-                        res.redirect('/');
-                    });
-
-                });
-        })(req,res,next);
-    }
+                    res.redirect('/');
+                    break;
+                case 401:
+                    //client credentials failed.
+                    res.sendStatus(500);
+                    break;
+                case 403:
+                    //user credentials failed
+                    req.session.flash = {
+                        type: 'danger', intro: 'Login Error!', message: 'Your username or password were incorrect. Please try again.'
+                    };
+                    res.redirect('/login');
+                    break;
+                default:
+                    //something else broke.
+                    res.sendStatus(500);
+            }
+        });
 };
 
 exports.showRegForm = function(req, res)
 {
-    res.render('register');
+    res.render('register', {csrfToken: req.csrfToken()});
 };
 
 exports.logout = function(req, res)
 {
-    req.logout();
-    //logout only removes the user from the session, does not destroy it. We want ours gone.
+    delete req.session.apiToken;
     req.session.destroy(function(err) {
         res.redirect('/');
     });
@@ -164,8 +154,10 @@ exports.deleteTodo = [ensureAuthenticated, function(req, res) {
 exports.createUser = function(req, res)
 {
     //TODO: Review escaping input
+    //TODO: Move this to using the API
     var newUser = new User( {
         username: req.body.username,
+        firstname: req.body.firstname,
         email: req.body.email,
         password: req.body.password
     });
@@ -177,6 +169,9 @@ exports.createUser = function(req, res)
         }
         else
         {
+            req.session.flash = {
+                type: 'success', intro: 'Account Created!', message: 'Please log in to the site!'
+            };
             res.redirect('/');
         }
     });

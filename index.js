@@ -111,7 +111,6 @@ var opts = {
     }
 };
 
-
 switch(app.get('env')){
     case 'development':
         app.use(morgan('dev'));
@@ -149,13 +148,19 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(__dirname + '/public'));
 
+app.use(function(req, res, next) {
+    res.locals.flash = req.session.flash;
+    delete req.session.flash;
+    next();
+});
+
 //endregion
 
 //region Routes
 //WEBAPP UI ROUTES
 app.get('/', uiRoutes.index);
 app.get('/login', uiRoutes.showLoginForm);
-app.post('/login', uiRoutes.processLogin);
+app.post('/login', uiRoutes.processWebUILogin);
 app.get('/register',uiRoutes.showRegForm);
 app.post('/register', uiRoutes.createUser);
 app.get('/logout', uiRoutes.logout);
@@ -166,13 +171,17 @@ app.put('/webui/todos/:id', uiRoutes.updateTodo);
 app.delete('/webui/todos/:id', uiRoutes.deleteTodo);
 
 //OAUTH2 ROUTES
-app.get('/api/dialog/authorize', authRoutes.authorization);
-app.post('/api/dialog/authorize/decision', authRoutes.decision);
+app.get('/api/oauth/dialog/authorize', authRoutes.authorization);
+app.post('/api/oauth/dialog/authorize/decision', authRoutes.decision);
 app.post('/api/oauth/token', authRoutes.token);
+app.get('/api/oauth/login', authRoutes.showOAuthLoginForm);
+app.post('/api/oauth/login', authRoutes.processOAuthLogin);
 
 //REST API ROUTES
+app.get('/api/', apiRoutes.showLandingPage);
 app.get('/api/register', apiRoutes.registerForm);
 app.post('/api/register', apiRoutes.registerClient);
+
 app.get('/api/todos', apiRoutes.getAllTodos);
 app.get('/api/todos/:id', apiRoutes.getSingleTodo);
 app.post('/api/todos', apiRoutes.createTodo);
